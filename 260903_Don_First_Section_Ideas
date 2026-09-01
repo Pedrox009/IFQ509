@@ -1,0 +1,86 @@
+from pathlib import Path
+
+import numpy as np 
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+
+#I've added this path so that you can just dump your file path for your data set into this area
+RAW_DATA_PATH = Path(r"C:\Code\Assignment 2\IFQ582-Assignment-2-Working\dataset_raw.csv")
+
+
+#You should recognize this. It is just loading the data frame and giving an outline of its shape. 
+df_raw = pd.read_csv(RAW_DATA_PATH)
+
+print(f"Rows: {df_raw.shape[0]:,}")
+print(f"Columns: {df_raw.shape[1]}")
+display(df_raw.head(100))
+
+#Pedro, This should allow us to be able to take screenshots of the original Data. . 
+original_shape = df_raw.shape
+original_columns = df_raw.columns.tolist()
+original_dtypes = df_raw.dtypes.astype(str).rename("original_pandas_dtype").to_frame()
+
+display(original_dtypes)
+
+
+print("Original DataFrame info:")
+df_raw.info()
+
+
+#Here we can list the variables that require data transformation towards a more correct data type. 
+expected_types = {
+    "Participant_ID": "identifier/string",
+    "survey_date": "datetime",
+    "region": "nominal category",
+    "country": "nominal category",
+    "gender": "nominal category",
+    "age": "ordinal category",
+    "worried": "ordinal/discrete numeric",
+    "covid19_positive": "binary integer",
+    "risk_infection": "continuous numeric",
+    "risk_infection_level": "ordinal category",
+    "risk_mortality": "continuous numeric",
+}
+
+type_audit = original_dtypes.copy()
+type_audit["expected_analytical_type"] = pd.Series(expected_types)
+display(type_audit.dropna(subset=["expected_analytical_type"]))
+
+
+
+#This part should allow us to take screenshots of the new data types to show that we 
+# understand every single variable, what their original data type was that Pandas 
+# gave it when it originally read the CSV, motivate why we need to change it, 
+# then show how we changed it, and then display how they have been changed. 
+df_typed = df_raw.copy(deep=True)
+
+categorical_columns = [
+    "region", "country", "gender", "age", "blood_type", "insurance",
+    "income", "smoking", "working", "risk_infection_level"
+]
+
+binary_columns = [
+    "covid19_positive", "covid19_symptoms", "covid19_contact", "asthma",
+    "kidney_disease", "liver_disease", "compromised_immune",
+    "heart_disease", "lung_disease", "diabetes", "hiv_positive",
+    "other_chronic", "nursing_home", "health_worker"
+]
+
+df_typed["Participant_ID"] = df_typed["Participant_ID"].astype("string")
+df_typed["survey_date"] = pd.to_datetime(
+    df_typed["survey_date"], format="%d/%m/%Y", errors="raise"
+)
+
+for column in categorical_columns:
+    df_typed[column] = df_typed[column].astype("category")
+
+for column in binary_columns:
+    df_typed[column] = df_typed[column].astype("Int64")
+
+corrected_dtypes = df_typed.dtypes.astype(str).rename("corrected_dtype").to_frame()
+display(original_dtypes.join(corrected_dtypes))
+
+# At the end of this part, we should be able to demonstrate how we were able to 
+# explore and study the data types, change the data types, and display them.
